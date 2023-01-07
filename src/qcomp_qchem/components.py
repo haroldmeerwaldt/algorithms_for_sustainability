@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import numpy as np
+import matplotlib.pyplot as plt
 from qiskit.algorithms.optimizers import SLSQP
 from qiskit.primitives import Estimator
 from qiskit_nature.second_q.algorithms import VQEUCCFactory, GroundStateEigensolver
@@ -51,8 +52,14 @@ class GroundStateEnergyCalculation:
         return total_ground_state_energy
 
 def minimize_ground_state_energy():
+    plt.ion()
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+
+
+    box_size = 3
     calc = GroundStateEnergyCalculation()
-    coords = np.random.default_rng().uniform(-1, 1, 3)
+    coords = np.random.default_rng().uniform(-box_size, box_size, 3)
     atom = AtomInfo("H", tuple(coords))
     calc.add_atom(atom)
     ground_state_energy = calc()
@@ -65,20 +72,32 @@ def minimize_ground_state_energy():
     while True:
         coords_j = coords.copy()
         for k, update_direction in enumerate(update_directions):
-            ground_state_energy_k, coords = line_search(calc, coords, update_direction, ground_state_energy)
+            ground_state_energy_k, coords = try_single_step(calc, coords, update_direction, ground_state_energy)
             if ground_state_energy_k == ground_state_energy:
                 if last_direction_updated==k:
                     break
             else:
                 last_direction_updated = k
                 ground_state_energy = ground_state_energy_k
+                ax.scatter(*coords)
+                plt.draw()
+                plt.pause(0.02)
 
         # acceleration step
-        ground_state_energy, coords = line_search(calc, coords, coords - coords_j, ground_state_energy)
+        ground_state_energy_l, coords = line_search(calc, coords, coords - coords_j, ground_state_energy)
+        if ground_state_energy_l < ground_state_energy:
+            ground_state_energy = ground_state_energy_l
+            ax.scatter(*coords)
+            plt.draw()
+            plt.pause(0.02)
+
         if abs(ground_state_energy_j - ground_state_energy) < epsilon:
             break
         else:
             ground_state_energy_j = ground_state_energy
+
+    plt.ioff()
+    plt.show()
     return ground_state_energy
 
 
@@ -95,4 +114,19 @@ def line_search(calc, coords, update_direction, ground_state_energy):
         else:
             print()
             break
+    return ground_state_energy, coords
+
+
+def try_single_step(calc, coords, update_direction, ground_state_energy):
+    coords_i = coords + update_direction
+    calc.update_last_atoms_coords(coords_i)
+    ground_state_energy_i = calc()
+    print(update_direction, ground_state_energy_i - ground_state_energy, end="")
+    if ground_state_energy_i < ground_state_energy:
+        ground_state_energy = ground_state_energy_i
+        coords = coords_i
+        print(coords, ground_state_energy)
+    else:
+        print()
+
     return ground_state_energy, coords
