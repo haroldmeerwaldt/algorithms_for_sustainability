@@ -22,6 +22,7 @@ class AtomInfo:
 
 class GroundStateEnergyCalculation:
     def __init__(self):
+        # self._molecule = MoleculeInfo(["C", "H", "H", "H"], [(0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-0.1, 0.0, 0.0), (0.0, 0.1, 0.0)], charge=0, multiplicity=1)
         self._molecule = MoleculeInfo(["H"], [(0.0, 0.0, 0.0)], charge=0, multiplicity=1)
 
         converter = JordanWignerMapper()  # also ParityMapper, BravyiKitaevMapper
@@ -55,87 +56,47 @@ class GroundStateEnergyCalculation:
 
 box_size = 3
 def minimize_ground_state_energy():
-    # plt.ion()
-
-
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-    ax.set_xlim([-box_size, box_size])
-    ax.set_ylim([-box_size, box_size])
-    ax.set_zlim([-box_size, box_size])
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
-    ax.scatter(*(0, 0, 0), marker="*", s=100, c="b")
-    ax.plot(0, 0, 'r*', markersize=10, zdir='y', zs=box_size, markerfacecolor="none")
-    ax.plot(0, 0, 'g*', markersize=10, zdir='x', zs=-box_size, markerfacecolor="none")
-    ax.plot(0, 0, 'k*', markersize=10, zdir='z', zs=-box_size, markerfacecolor="none")
-
+    ax = setup_plot()
+    plot_point((0, 0, 0), ax, symbol="*", size=100)
     calc = GroundStateEnergyCalculation()
-    coords = np.random.default_rng().uniform(-box_size, box_size, 3)
-    atom = AtomInfo("H", tuple(coords))
-    calc.add_atom(atom)
-    ground_state_energy = calc()
-    print("\n", coords, ground_state_energy)
-    ax.scatter(*coords, marker="o", c="b")
-    learning_rate = 0.1
-    epsilon = 0.01
-    update_directions = [sign * learning_rate * np.array([int(n==0), int(n==1), int(n==2)]) for n in range(3) for sign in [1, -1]]
-    ground_state_energy_j = np.inf
-    last_direction_updated = -1
-    while True:
-        coords_j = coords.copy()
-        for k, update_direction in enumerate(update_directions):
-            ground_state_energy_k, coords = try_single_step(calc, coords, update_direction, ground_state_energy, ax)
-            if ground_state_energy_k == ground_state_energy:
-                if last_direction_updated==k:
-                    break
+    for _ in range(2):
+        coords = np.random.default_rng().uniform(-box_size, box_size, 3)
+        # coords = (0, 0, 0.1)
+        atom = AtomInfo("H", tuple(coords))
+        calc.add_atom(atom)
+        ground_state_energy = calc()
+        print("\n", coords, ground_state_energy)
+        ax.scatter(*coords, marker="o", c="b")
+        learning_rate = 0.1
+        epsilon = 0.01
+        update_directions = [sign * learning_rate * np.array([int(n==0), int(n==1), int(n==2)]) for n in range(3) for sign in [1, -1]]
+        ground_state_energy_j = np.inf
+        last_direction_updated = -1
+        while True:
+            coords_j = coords.copy()
+            for k, update_direction in enumerate(update_directions):
+                ground_state_energy_k, coords = try_single_step(calc, coords, update_direction, ground_state_energy, ax)
+                if ground_state_energy_k == ground_state_energy:
+                    if last_direction_updated==k:
+                        break
+                else:
+                    last_direction_updated = k
+                    ground_state_energy = ground_state_energy_k
+
+            # acceleration step
+            ground_state_energy_l, coords = line_search(calc, coords, coords - coords_j, ground_state_energy, ax)
+            if ground_state_energy_l < ground_state_energy:
+                ground_state_energy = ground_state_energy_l
+
+            if abs(ground_state_energy_j - ground_state_energy) < epsilon:
+                break
             else:
-                last_direction_updated = k
-                ground_state_energy = ground_state_energy_k
+                ground_state_energy_j = ground_state_energy
 
+        print(f"done at position {coords} at distance {np.linalg.norm(coords)} with ground state energy {ground_state_energy}")
 
-        # acceleration step
-        ground_state_energy_l, coords = line_search(calc, coords, coords - coords_j, ground_state_energy, ax)
-        if ground_state_energy_l < ground_state_energy:
-            ground_state_energy = ground_state_energy_l
-
-        if abs(ground_state_energy_j - ground_state_energy) < epsilon:
-            break
-        else:
-            ground_state_energy_j = ground_state_energy
-
-    # plt.ioff()
-
-    print(f"done at position {coords} at distance {np.linalg.norm(coords)} with ground state energy {ground_state_energy}")
     plt.show()
     return ground_state_energy
-
-
-def line_search(calc, coords, update_direction, ground_state_energy, ax):
-    while True:
-        coords_i = coords + update_direction
-        calc.update_last_atoms_coords(coords_i)
-        ground_state_energy_i = calc()
-        print(update_direction, ground_state_energy_i - ground_state_energy, end="")
-        if ground_state_energy_i < ground_state_energy:
-            ground_state_energy = ground_state_energy_i
-            coords = coords_i
-            print(coords, ground_state_energy)
-            ax.scatter(*coords, marker="o", c="b")
-            # coords_arrays = [np.array([coord]) for coord in coords]
-            # ax.contourf(*coords_arrays, zdir='x', offset=-4, cmap=plt.cm.hot)
-            # ax.contour(*coords_arrays, zdir='x', offset=-4, colors='k')
-            x, y, z = tuple(coords)
-            ax.plot(x, z, 'ro', zdir='y', zs=box_size, markerfacecolor="none")
-            ax.plot(y, z, 'go', zdir='x', zs=-box_size, markerfacecolor="none")
-            ax.plot(x, y, 'ko', zdir='z', zs=-box_size, markerfacecolor="none")
-            plt.draw()
-            plt.pause(0.05)
-        else:
-            print()
-            break
-    return ground_state_energy, coords
 
 
 def try_single_step(calc, coords, update_direction, ground_state_energy, ax):
@@ -147,14 +108,40 @@ def try_single_step(calc, coords, update_direction, ground_state_energy, ax):
         ground_state_energy = ground_state_energy_i
         coords = coords_i
         print(coords, ground_state_energy)
-        ax.scatter(*coords, marker="o", c="b")
-        x, y, z = tuple(coords)
-        ax.plot(x, z, 'ro', zdir='y', zs=box_size, markerfacecolor="none")
-        ax.plot(y, z, 'go', zdir='x', zs=-box_size, markerfacecolor="none")
-        ax.plot(x, y, 'ko', zdir='z', zs=-box_size, markerfacecolor="none")
-        plt.draw()
-        plt.pause(0.05)
+        plot_point(coords, ax)
     else:
         print()
-
     return ground_state_energy, coords
+
+
+def line_search(calc, coords, update_direction, ground_state_energy, ax):
+    while True:
+        ground_state_energy_i, coords = try_single_step(calc, coords, update_direction, ground_state_energy, ax)
+        if ground_state_energy_i < ground_state_energy:
+            ground_state_energy = ground_state_energy_i
+        else:
+            break
+    return ground_state_energy, coords
+
+
+def setup_plot():
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+    ax.set_xlim([-box_size, box_size])
+    ax.set_ylim([-box_size, box_size])
+    ax.set_zlim([-box_size, box_size])
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    return ax
+
+def plot_point(coords, ax, symbol="o", size=None):
+    size = size or 20
+    ax.scatter(*coords, marker=symbol, s=size, c="b")
+    x, y, z = tuple(coords)
+    markersize = size / 10 if size is not None else None
+    ax.plot(x, z, f'r{symbol}', markersize=markersize, zdir='y', zs=box_size, markerfacecolor="none")
+    ax.plot(y, z, f'g{symbol}', markersize=markersize, zdir='x', zs=-box_size, markerfacecolor="none")
+    ax.plot(x, y, f'k{symbol}', markersize=markersize, zdir='z', zs=-box_size, markerfacecolor="none")
+    plt.draw()
+    plt.pause(0.05)
