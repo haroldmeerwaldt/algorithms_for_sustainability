@@ -1,0 +1,8 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code  # Maps the project directory to /code in the container
+    tty: true  # Keeps the container running in interactive mode
