@@ -15,8 +15,8 @@ RUN python -m venv /env && \
     pip install --upgrade pip setuptools wheel && \
     pip install -e .
 
-# Expose the port if your app runs on a specific one (e.g., Flask/Django apps)
-# EXPOSE 5000
+# Expose port for Jupyter
+EXPOSE 8888
 
 # Run the container in an interactive shell (optional)
 CMD ["sleep", "infinity"]
