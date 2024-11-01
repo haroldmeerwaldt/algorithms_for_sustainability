@@ -1,1 +1,1 @@
-# algorithms_for_sustainability
+# quantum_algorithms

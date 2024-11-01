@@ -1,5 +1,8 @@
-from src.quantum_algorithms.vqe.distance_finder import box_size
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
+from src.quantum_algorithms.vqe.distance_finder import box_size
 
 def setup_plot():
     fig = plt.figure()
