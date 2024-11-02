@@ -5,10 +5,11 @@ from quantum_algorithms.vqe.energy_calculation import AtomInfo, GroundStateEnerg
 
 def test_calculate_ground_state_energy():
     distance = 0.735
-    molecule = MoleculeInfo(["H", "H"], [(0.0, 0.0, 0.0), (0.0, 0.0, distance)], charge=0, multiplicity=1)
+    molecule = MoleculeInfo(["H", "H"], [(0.0, 0.0, 0.0), (0.0, 0.0, distance)])
     calc = GroundStateEnergyCalculation(molecule)
     ground_state_energy = calc.run()
     assert ground_state_energy == pytest.approx(-1.1373060356959406)
+
 
 def test_minimize_ground_state_energy():
     # ground_state_energy = minimize_ground_state_energy()

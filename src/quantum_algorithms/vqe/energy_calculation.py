@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from qiskit.primitives import Estimator
 from qiskit_algorithms import VQE
 from qiskit_algorithms.optimizers import COBYLA
-from qiskit_nature.second_q.circuit.library import HartreeFock
-from qiskit_nature.second_q.circuit.library import UCCSD
+from qiskit_nature.second_q.circuit.library import UCCSD, HartreeFock
 from qiskit_nature.second_q.drivers import PySCFDriver
 from qiskit_nature.second_q.formats import MoleculeInfo
 from qiskit_nature.second_q.mappers import ParityMapper
@@ -25,9 +24,9 @@ class GroundStateEnergyCalculation:
         self._optimizer = COBYLA(maxiter=n_max_iterations)
 
     def update_last_atoms_coords(self, coords: tuple[float, float, float]):
-        old_coords = list(self._molecule.coords)
-        old_coords[-1] = coords
-        self._molecule.coords = old_coords
+        new_coords = list(self._molecule.coords)
+        new_coords[-1] = coords
+        self._molecule.coords = new_coords
 
     def run(self):
         driver = PySCFDriver.from_molecule(self._molecule)
@@ -47,5 +46,3 @@ class GroundStateEnergyCalculation:
         electronic_ground_state_energy = result.eigenvalue
         total_ground_state_energy = electronic_ground_state_energy + es_problem.nuclear_repulsion_energy
         return total_ground_state_energy
-
-

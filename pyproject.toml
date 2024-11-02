@@ -8,6 +8,9 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 120
 
+[tool.isort]
+line_length = 120
+
 [tool.pylint.messages_control]
 disable = [
   "missing-docstring",
