@@ -16,14 +16,14 @@ class TestDistanceFinder:
         _ = DistanceFinder()
 
     def test_run_method(self, mocker, mock_ground_state_calculation):
-        mock_ground_state_calculation.run.side_effect = lambda: -1.8
+        mock_ground_state_calculation.run.return_value = -1.8
         finder = DistanceFinder()
         mock_minimize = mocker.patch("quantum_algorithms.vqe.distance_finder.minimize")
         mock_minimize.return_value.x = np.array([0.0, 0.0, 1.5])
 
         result = finder.run()
-        assert np.isclose(result, np.linalg.norm([0.0, 0.0, 1.5]))
-        mock_minimize.assert_called_once()
+        assert np.isclose(result, 1.5)
+        assert mock_minimize.call_count == 1
 
     def test_iteration_callback_execution(self, mocker, mock_ground_state_calculation):
         mock_callback = mocker.Mock()
@@ -32,7 +32,7 @@ class TestDistanceFinder:
 
         finder._minimize_ground_state_energy(np.array([0.0, 0.0, 2.0]))
 
-        mock_callback.assert_called_once()
+        assert mock_callback.call_count == 1
         call_args = mock_callback.call_args[0][0]
         assert isinstance(call_args, IterationInfo)
         assert call_args.coords == (0.0, 0.0, 2.0)
