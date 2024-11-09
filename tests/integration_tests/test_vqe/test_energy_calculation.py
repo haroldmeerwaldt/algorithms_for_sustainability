@@ -1,6 +1,6 @@
 import pytest
 from qiskit_nature.second_q.formats import MoleculeInfo
-from quantum_algorithms.vqe.energy_calculation import AtomInfo, GroundStateEnergyCalculation
+from quantum_algorithms.vqe.energy_calculation import GroundStateEnergyCalculation
 
 
 def test_calculate_ground_state_energy():
@@ -9,8 +9,3 @@ def test_calculate_ground_state_energy():
     calc = GroundStateEnergyCalculation(molecule)
     ground_state_energy = calc.run()
     assert ground_state_energy == pytest.approx(-1.1373060356959406)
-
-
-def test_minimize_ground_state_energy():
-    # ground_state_energy = minimize_ground_state_energy()
-    print(ground_state_energy)

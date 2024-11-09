@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from qiskit.primitives import Estimator
 from qiskit_algorithms import VQE
 from qiskit_algorithms.optimizers import COBYLA
@@ -10,14 +8,15 @@ from qiskit_nature.second_q.mappers import ParityMapper
 from qiskit_nature.second_q.problems import ElectronicStructureProblem
 
 
-@dataclass
-class AtomInfo:
-    symbol: str
-    coords: tuple[float, float, float]
-
-
 class GroundStateEnergyCalculation:
     def __init__(self, molecule: MoleculeInfo, n_max_iterations: int = 100):
+        """Calculates the ground state energy of a molecule.
+
+        Args:
+            molecule (MoleculeInfo): The molecular structure information, including atom types and coordinates.
+            n_max_iterations (int): The maximum number of iterations allowed for the optimization algorithm.
+                Defaults to 100.
+        """
         self._molecule = molecule
         # todo: move to V2 Estimator once https://github.com/qiskit-community/qiskit-algorithms/issues/136 is fixed
         self._estimator = Estimator()

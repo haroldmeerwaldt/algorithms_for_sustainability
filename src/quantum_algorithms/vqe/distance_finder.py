@@ -16,6 +16,15 @@ class DistanceFinder:
         init_distance: float = 3,  # Angstroms
         atoms: tuple[str, str] = ("H", "H"),
     ):
+        """Finds the optimal distance between two atoms of a molecule.
+
+         Args:
+            iteration_callback: Optional callback function that receives an `IterationInfo` object
+                after each iteration during the energy minimization process. Defaults to None.
+            init_distance: Initial distance between atoms, in Angstroms. Defaults to 3.0 Angstroms.
+            atoms: A tuple specifying the two atomic elements involved in the calculation, such
+                as ("H", "H") for a hydrogen molecule. Defaults to ("H", "H").
+         """
         self._iteration_callback = iteration_callback
         self._last_atoms_init_coords = (0.0, 0.0, init_distance)
         molecule = MoleculeInfo(atoms, [(0.0, 0.0, 0.0), self._last_atoms_init_coords])
@@ -41,8 +50,3 @@ class DistanceFinder:
 class IterationInfo:
     coords: tuple[float, float, float]
     ground_state_energy: float
-
-
-if __name__ == "__main__":
-    distance_finder = DistanceFinder(iteration_callback=print)
-    print(distance_finder.run())
